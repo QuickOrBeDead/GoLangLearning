@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 )
 
@@ -12,12 +14,22 @@ type Page struct {
 	Body []byte
 }
 
+var validPath = regexp.MustCompile("^/([a-zA-Z0-9]+)$")
+
 func loadPage(name string) (*Page, error) {
-	body, err := os.ReadFile("Pages/" + name + ".html")
-	if err != nil {
+	path := "Pages/" + name + ".html"
+	if _, err := os.Stat(path); err == nil {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Page{Name: name, Body: body}, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	} else {
 		return nil, err
 	}
-	return &Page{Name: name, Body: body}, nil
 }
 
 func main() {
@@ -41,9 +53,17 @@ func main() {
 }
 
 func pageHandler(res http.ResponseWriter, req *http.Request) {
+	pageName := validPath.FindStringSubmatch(req.URL.Path)
+	if pageName == nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	page, err := loadPage(req.URL.Path[1:])
 	if err != nil {
-		res.WriteHeader(http.StatusNotFound)
+		http.Error(res, "page load error", http.StatusInternalServerError)
+	} else if page == nil {
+		http.NotFound(res, req)
 	} else {
 		res.Write(page.Body)
 	}
