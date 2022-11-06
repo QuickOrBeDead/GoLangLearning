@@ -123,7 +123,11 @@ func pageHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if data != nil {
-		t, err := template.New("t").Parse(string(page.Body))
+		t, err := template.New("t").
+			Funcs(template.FuncMap{"mod": func(i, j int) int { return i % j }}).
+			Funcs(template.FuncMap{"add": func(i, j int) int { return i + j }}).
+			Parse(string(page.Body))
+
 		if err != nil {
 			http.Error(res, "page template parse error: "+err.Error(), http.StatusInternalServerError)
 			return

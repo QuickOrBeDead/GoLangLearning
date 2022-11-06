@@ -7,14 +7,26 @@
     </head>
     <body>
         <h1>Videos</h1>
-        {{range .}}
-        <figure>
-            <a href="https://www.youtube.com/watch?v={{.VideoId}}" title="{{.Title}}" target="_blank">
-                <img src="{{.Thumbnail}}" alt="{{.Title}}" title="{{.Title}}" width="240" height="180" />
-            </a>
-            <figcaption>{{.Title}}</figcaption>
-        </figure>
-        {{end}}
+        <div class="container">
+            {{$len := len .}}
+            {{$columns := 3}}
+            {{range $i, $item := .}}
+            {{if eq (mod $i $columns) 0}}
+            <div class="row">
+            {{end}}
+                <div class="column">
+                    <figure>
+                        <a href="https://www.youtube.com/watch?v={{.VideoId}}" title="{{.Title}}" target="_blank">
+                            <img src="{{.Thumbnail}}" alt="{{.Title}}" title="{{.Title}}" width="240" height="180" />
+                        </a>
+                        <figcaption>{{$i}}. {{.Title}}</figcaption>
+                    </figure>
+                </div>
+            {{if or (eq $len (add $i 1)) (and (gt $i 0) (eq (mod (add $i 1) $columns) 0)) }}
+            </div>
+            {{end}}
+            {{end}}
+        </div>       
     </body>
 </html>
 
