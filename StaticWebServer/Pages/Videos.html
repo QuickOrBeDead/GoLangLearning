@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Videos</title>
+        <link rel="stylesheet" href="/css/normalize.min.css">
+        <link rel="stylesheet" href="/css/milligram.min.css">
+    </head>
+    <body>
+        <h1>Videos</h1>
+        {{range .}}
+        <figure>
+            <a href="https://www.youtube.com/watch?v={{.VideoId}}" title="{{.Title}}" target="_blank">
+                <img src="{{.Thumbnail}}" alt="{{.Title}}" title="{{.Title}}" width="240" height="180" />
+            </a>
+            <figcaption>{{.Title}}</figcaption>
+        </figure>
+        {{end}}
+    </body>
+</html>
+
+
+
