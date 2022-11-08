@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -9,8 +10,10 @@ import (
 
 var storyData map[string]any
 var storyTmpl *template.Template
+var storyPageCache map[string][]byte
 
 func main() {
+	storyPageCache = make(map[string][]byte)
 	storyTmpl = template.Must(template.ParseFiles("Templates/Story.html"))
 	storyJsonContent, err := os.ReadFile("Choose Your Own Adventure.json")
 	if err != nil {
@@ -32,5 +35,18 @@ func storyHandler(wr http.ResponseWriter, req *http.Request) {
 		storyName = "intro"
 	}
 
-	storyTmpl.Execute(wr, storyData[storyName])
+	wr.Write(getStoryPageContents(storyName))
+}
+
+func getStoryPageContents(storyName string) []byte {
+	content, hasContent := storyPageCache[storyName]
+	if !hasContent {
+		buf := new(bytes.Buffer)
+		storyTmpl.Execute(buf, storyData[storyName])
+		content = buf.Bytes()
+		buf.Reset()
+		storyPageCache[storyName] = content
+	}
+
+	return content
 }
