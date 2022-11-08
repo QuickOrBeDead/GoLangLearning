@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Story - {{.title}}</title>
+    </head>
+    <body>
+        <h1>{{.title}}</h1>
+        {{ range .story }}
+        <p>{{.}}</p> 
+        {{end}}
+        {{ if (gt (len .options) 0) }}
+        <h2>Options</h2>
+        {{ range .options }}
+        <a href="/{{.arc}}">{{.text}}</p> 
+        {{end}}
+        {{end}}
+    </body>
+</html>
+
+
+
