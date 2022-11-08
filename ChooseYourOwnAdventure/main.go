@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-var storyData map[string]json.RawMessage
+var storyData map[string]any
 var storyTmpl *template.Template
 
 func main() {
@@ -32,7 +32,5 @@ func storyHandler(wr http.ResponseWriter, req *http.Request) {
 		storyName = "intro"
 	}
 
-	var data any
-	json.Unmarshal(storyData[storyName], &data)
-	storyTmpl.Execute(wr, data)
+	storyTmpl.Execute(wr, storyData[storyName])
 }
