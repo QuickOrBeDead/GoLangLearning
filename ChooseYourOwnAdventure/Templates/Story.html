@@ -2,18 +2,63 @@
 <html>
     <head>
         <title>Story - {{.title}}</title>
+        <style>      
+            body {
+                font-family: helvetica, arial;
+            }
+            h1, h2 {
+                text-align: center;
+            }
+            .page {
+                width: 80%;
+                max-width: 500px;
+                margin: auto;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                padding: 20px;
+            }
+            ul {
+                border-top: 1px dotted #ccc;
+                padding: 10px 0 0 0;
+                -webkit-padding-start: 0;
+                text-align: center;
+            }
+            li {
+                padding-top: 10px;
+            }
+            a, a:visited {
+                text-decoration: none;
+                color: #6295b5;
+            }
+            a:active,
+            a:hover {
+                color: #7792a2;
+            }
+            p {
+                text-indent: 1em;
+            }
+        </style>
     </head>
     <body>
-        <h1>{{.title}}</h1>
-        {{ range .story }}
-        <p>{{.}}</p> 
-        {{end}}
-        {{ if (gt (len .options) 0) }}
-        <h2>Options</h2>
-        {{ range .options }}
-        <a href="/{{.arc}}">{{.text}}</p> 
-        {{end}}
-        {{end}}
+        <div class="page">
+            <h1>{{.title}}</h1>
+            {{ range .story }}
+            <p>{{.}}</p> 
+            {{end}}
+            {{ if (gt (len .options) 0) }}
+            <h2>Options</h2>
+            <ul>
+                {{ range .options }}
+                <li><a href="/{{.arc}}">{{.text}}</p></li>
+                {{end}}
+            </ul>
+            {{else}}
+            <h2>The End</h2>
+            <ul>
+                <li><a href="/">Index</p></li>
+            </ul>
+            {{end}}
+        </div>
     </body>
 </html>
 
