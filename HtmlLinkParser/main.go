@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -12,6 +13,8 @@ type Link struct {
 	Text string
 	Href string
 }
+
+var whitespacesRegex *regexp.Regexp = regexp.MustCompile(`\s+`)
 
 func main() {
 	file, _ := os.Open("test.html")
@@ -53,9 +56,11 @@ func getText(n *html.Node) string {
 	var t func(n *html.Node)
 	t = func(n *html.Node) {
 		if n.Type == html.TextNode {
-			text := strings.Join(strings.Fields(n.Data), " ")
+			text := whitespacesRegex.ReplaceAllString(n.Data, " ")
+			text = strings.ReplaceAll(text, "\r", "")
+			text = strings.ReplaceAll(text, "\t", "")
+			text = strings.ReplaceAll(text, "\n", "")
 			sb.WriteString(text)
-			sb.WriteRune(' ')
 		}
 
 		for child := n.FirstChild; child != nil; child = child.NextSibling {
