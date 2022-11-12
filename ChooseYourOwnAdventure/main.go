@@ -30,6 +30,7 @@ func main() {
 }
 
 func storyHandler(wr http.ResponseWriter, req *http.Request) {
+	wr.Header().Add("content-type", "text/html; charset=utf-8")
 	storyName := req.URL.Path[1:]
 	if storyName == "" {
 		storyName = "intro"
