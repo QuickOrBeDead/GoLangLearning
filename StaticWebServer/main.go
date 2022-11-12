@@ -133,12 +133,14 @@ func pageHandler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		res.Header().Add("content-type", "text/html; charset=utf-8")
 		err = t.Execute(res, data)
 		if err != nil {
 			http.Error(res, "page template execute error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else {
+		res.Header().Add("content-type", "text/html; charset=utf-8")
 		res.Write(page.Body)
 	}
 }
