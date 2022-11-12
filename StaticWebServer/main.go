@@ -102,7 +102,12 @@ func cssHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func pageHandler(res http.ResponseWriter, req *http.Request) {
-	pageNameMatch := validPagePath.FindStringSubmatch(req.URL.Path)
+	path := req.URL.Path
+	if path == "/" {
+		path = "/Index"
+	}
+
+	pageNameMatch := validPagePath.FindStringSubmatch(path)
 	if pageNameMatch == nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
