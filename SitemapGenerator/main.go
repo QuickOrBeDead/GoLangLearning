@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/QuickOrBeDead/GoLangLearning/datastructures"
@@ -26,11 +27,10 @@ func main() {
 		return
 	}
 
-	links := make(datastructures.LinkSet, 128)
-	links.Add("/")
+	sitemap := &datastructures.SitemapNode{Url: "/", Children: make([]*datastructures.SitemapNode, 0), Parent: nil, Level: 0}
 
-	var searchLinks func(*html.Node)
-	searchLinks = func(n *html.Node) {
+	var searchLinks func(*html.Node, *datastructures.SitemapNode)
+	searchLinks = func(n *html.Node, s *datastructures.SitemapNode) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for _, attr := range n.Attr {
 				if attr.Key == "href" {
@@ -40,20 +40,17 @@ func main() {
 					if err == nil {
 						if currentUrl.Host == "" || (currentUrl.Host == rootUrl.Host && currentUrl.Scheme == rootUrl.Scheme) {
 							if currentUrl.Path != "" {
-								if !links.Contains(currentUrl.Path) {
-									links.Add(currentUrl.Path)
-									if len(links) >= 50 {
-										return
-									}
+								c := s.AddChild(currentUrl.Path, s)
+								if c == nil || c.Level > 1 {
+									break
+								}
 
-									time.Sleep(1 * time.Second)
-									newUrl := rootUrl.JoinPath(currentUrl.Path).String()
-									node, err := parseHtml(newUrl)
-									if err == nil {
-										searchLinks(node)
-									} else {
-										fmt.Println("error parsing html: ", err.Error())
-									}
+								time.Sleep(1 * time.Second)
+								node, err := parseHtml(rootUrl.JoinPath(c.Url).String())
+								if err == nil {
+									searchLinks(node, c)
+								} else {
+									fmt.Println("error parsing html: ", err.Error())
 								}
 							}
 						} else {
@@ -67,15 +64,20 @@ func main() {
 		}
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			searchLinks(c)
+			searchLinks(c, s)
 		}
 	}
 
-	searchLinks(rootNode)
+	searchLinks(rootNode, sitemap)
 
-	fmt.Println("links count: ", len(links))
-	for k := range links {
-		fmt.Println(k)
+	printSitemap(sitemap)
+}
+
+func printSitemap(s *datastructures.SitemapNode) {
+	fmt.Printf("%s%s\n", strings.Repeat("   ", s.Level), s.Url)
+
+	for _, c := range s.Children {
+		printSitemap(c)
 	}
 }
 
