@@ -7,7 +7,7 @@ type SitemapNode struct {
 	Parent   *SitemapNode
 }
 
-func (t *SitemapNode) AddChild(url string, parent *SitemapNode) *SitemapNode {
+func (t *SitemapNode) AddChild(url string) *SitemapNode {
 	if t.hasUrl(url) {
 		return nil
 	}
