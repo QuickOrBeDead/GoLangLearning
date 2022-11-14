@@ -44,61 +44,71 @@ func main() {
 
 	switch printType {
 	case "Tree":
-		sitemap := &datastructures.SitemapNode{Url: "/", Children: make([]*datastructures.SitemapNode, 0), Parent: nil, Level: 0}
-		searchPageLinks(rootNode, sitemap, func(u *url.URL, data any) (bool, any, *url.URL) {
-			if u.Path != "" && (u.Host == "" || (u.Host == rootUrl.Host && u.Scheme == rootUrl.Scheme)) {
-				c := data.(*datastructures.SitemapNode).AddChild(u.Path)
-				if c == nil || c.Level > 1 {
-					return false, nil, nil
-				}
-
-				return true, c, rootUrl.JoinPath(c.Url)
-			}
-
-			return false, nil, nil
-		})
-		printSitemap(sitemap)
+		printTree(rootNode, rootUrl)
 	case "Sitemap":
-		set := datastructures.LinkSet{}
-		searchPageLinks(rootNode, 0, func(u *url.URL, data any) (bool, any, *url.URL) {
-			if u.Path != "" && (u.Host == "" || (u.Host == rootUrl.Host && u.Scheme == rootUrl.Scheme)) {
-				level := data.(int)
-				if level > 1 || set.Contains(u.Path) {
-					return false, nil, nil
-				}
+		printSitemapXml(rootNode, rootUrl)
+	default:
+		fmt.Println("invalid type: ", printType)
+	}
+}
 
-				set.Add(u.Path)
-
-				return true, level + 1, rootUrl.JoinPath(u.Path)
+func printSitemapXml(rootNode *html.Node, rootUrl *url.URL) {
+	set := datastructures.LinkSet{}
+	searchPageLinks(rootNode, 0, func(u *url.URL, data any) (bool, any, *url.URL) {
+		if u.Path != "" && (u.Host == "" || (u.Host == rootUrl.Host && u.Scheme == rootUrl.Scheme)) {
+			level := data.(int)
+			if level > 1 || set.Contains(u.Path) {
+				return false, nil, nil
 			}
 
-			return false, nil, nil
-		})
+			set.Add(u.Path)
 
-		header := xml.ProcInst{
-			Target: "xml", Inst: []byte(`version="1.0" encoding="UTF-8"`),
-		}
-		startElement := xml.StartElement{
-			Name: xml.Name{Space: "http://www.sitemaps.org/schemas/sitemap/0.9", Local: "urlset"},
-			Attr: []xml.Attr{
-				{Name: xml.Name{Space: "", Local: "xmlns:xsi"}, Value: "http://www.w3.org/2001/XMLSchema-instance"},
-				{Name: xml.Name{Space: "", Local: "xsi:schemaLocation"}, Value: "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd/sitemap.xsd"},
-			},
-		}
-		buf := new(bytes.Buffer)
-		xmlEnc := xml.NewEncoder(buf)
-		xmlEnc.EncodeToken(header)
-		xmlEnc.EncodeToken(startElement)
-
-		for k := range set {
-			xmlEnc.Encode(&urlxml{Location: k})
+			return true, level + 1, rootUrl.JoinPath(u.Path)
 		}
 
-		xmlEnc.EncodeToken(startElement.End())
-		xmlEnc.Flush()
+		return false, nil, nil
+	})
 
-		fmt.Println(buf.String())
+	header := xml.ProcInst{
+		Target: "xml", Inst: []byte(`version="1.0" encoding="UTF-8"`),
 	}
+	startElement := xml.StartElement{
+		Name: xml.Name{Space: "http://www.sitemaps.org/schemas/sitemap/0.9", Local: "urlset"},
+		Attr: []xml.Attr{
+			{Name: xml.Name{Space: "", Local: "xmlns:xsi"}, Value: "http://www.w3.org/2001/XMLSchema-instance"},
+			{Name: xml.Name{Space: "", Local: "xsi:schemaLocation"}, Value: "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd/sitemap.xsd"},
+		},
+	}
+	buf := new(bytes.Buffer)
+	xmlEnc := xml.NewEncoder(buf)
+	xmlEnc.EncodeToken(header)
+	xmlEnc.EncodeToken(startElement)
+
+	for k := range set {
+		xmlEnc.Encode(&urlxml{Location: k})
+	}
+
+	xmlEnc.EncodeToken(startElement.End())
+	xmlEnc.Flush()
+
+	fmt.Println(buf.String())
+}
+
+func printTree(rootNode *html.Node, rootUrl *url.URL) {
+	sitemap := &datastructures.SitemapNode{Url: "/", Children: make([]*datastructures.SitemapNode, 0), Parent: nil, Level: 0}
+	searchPageLinks(rootNode, sitemap, func(u *url.URL, data any) (bool, any, *url.URL) {
+		if u.Path != "" && (u.Host == "" || (u.Host == rootUrl.Host && u.Scheme == rootUrl.Scheme)) {
+			c := data.(*datastructures.SitemapNode).AddChild(u.Path)
+			if c == nil || c.Level > 1 {
+				return false, nil, nil
+			}
+
+			return true, c, rootUrl.JoinPath(c.Url)
+		}
+
+		return false, nil, nil
+	})
+	printSitemap(sitemap)
 }
 
 func searchPageLinks(n *html.Node, data any, f func(*url.URL, any) (bool, any, *url.URL)) {
