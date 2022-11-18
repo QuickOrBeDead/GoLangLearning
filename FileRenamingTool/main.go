@@ -135,7 +135,7 @@ func copyFile(src string, dest string) error {
 
 	defer destFile.Close()
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, os.Getpagesize()*32)
 	for {
 		n, err := srcFile.Read(buf)
 		if err != nil && err != io.EOF {
@@ -146,6 +146,7 @@ func copyFile(src string, dest string) error {
 			break
 		}
 
+		io.Copy()
 		_, err = destFile.Write(buf[:n])
 		if err != nil {
 			return err
