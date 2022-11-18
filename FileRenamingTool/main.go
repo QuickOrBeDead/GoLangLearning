@@ -12,7 +12,15 @@ import (
 	"strings"
 )
 
+var fileNameRegex *regexp.Regexp
+
 func main() {
+	var err error
+	fileNameRegex, err = regexp.Compile(`(.*)_([0-9]+).txt`)
+	if err != nil {
+		fmt.Println("regex compile error: ", err.Error())
+	}
+
 	root := "./files"
 	original := filepath.Join(root, "original")
 	output := filepath.Join(root, "output")
@@ -37,17 +45,13 @@ func main() {
 
 func renameFile(path string) {
 	dir, filename := filepath.Split(path)
-	regex, err := regexp.Compile(`(.*)_([0-9]+).txt`)
-	if err != nil {
-		fmt.Println("regex compile error: ", err.Error())
-	}
 
-	matches := regex.FindStringSubmatch(filename)
+	matches := fileNameRegex.FindStringSubmatch(filename)
 	if len(matches) > 2 {
 		n, _ := strconv.Atoi(matches[2])
 		total := int(math.Pow10(len(matches[2])))
 		newFile := filepath.Join(dir, fmt.Sprintf("%s (%d of %d).txt", matches[1], n, total))
-		err = os.Rename(path, newFile)
+		err := os.Rename(path, newFile)
 		if err != nil {
 			fmt.Println("file rename error: ", err.Error())
 			fmt.Printf("file '%s' is renamed to '%s'\n", path, newFile)
@@ -146,7 +150,6 @@ func copyFile(src string, dest string) error {
 			break
 		}
 
-		io.Copy()
 		_, err = destFile.Write(buf[:n])
 		if err != nil {
 			return err
