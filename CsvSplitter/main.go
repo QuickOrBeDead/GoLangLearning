@@ -11,7 +11,7 @@ var newLine []byte = []byte("\n")
 
 func main() {
 	csvPath := "./files/source.csv"
-	err := createCsv(csvPath)
+	err := createCsv(csvPath, 50)
 	if err != nil {
 		fmt.Println("source csv create error: ", err.Error())
 		return
@@ -90,7 +90,7 @@ func writeLine(file *os.File, line *[]byte) error {
 	return nil
 }
 
-func createCsv(path string) error {
+func createCsv(path string, rowCount int) error {
 	source, err := os.Create(path)
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func createCsv(path string) error {
 		return err
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < rowCount; i++ {
 		source.WriteString(fmt.Sprintf("Example%d,example%d@example.com,222-22-22,Example Address%d\n", i, i, i))
 	}
 
