@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var newLine []byte = []byte("\n")
+
 func main() {
 	csvPath := "./files/source.csv"
 	err := createCsv(csvPath)
@@ -15,15 +17,24 @@ func main() {
 		return
 	}
 
+	err = splitCsv(csvPath, 12)
+	if err != nil {
+		fmt.Println("error spliting csv file: ", err.Error())
+	}
+}
+
+func splitCsv(csvPath string, fileRowSize int) error {
 	file, err := os.Open(csvPath)
 	if err != nil {
-		fmt.Println("source csv open error: ", err.Error())
-		return
+		return err
 	}
 
 	defer file.Close()
 
+	rowCounter := 0
 	reader := bufio.NewReader(file)
+	var header []byte = nil
+	var outputFile *os.File
 	for {
 		line, _, err := reader.ReadLine()
 		if err == io.EOF {
@@ -31,12 +42,52 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("error reading csv line", err.Error())
-			break
+			return err
 		}
 
-		fmt.Printf("%s \n", line)
+		if header == nil {
+			header = line
+			continue
+		}
+
+		fileNumber := rowCounter / fileRowSize
+		if rowCounter%fileRowSize == 0 {
+			outputFile, err = os.Create(fmt.Sprintf("./files/output_%d.csv", fileNumber))
+			if err != nil {
+				return err
+			}
+
+			defer outputFile.Close()
+
+			err = writeLine(outputFile, &header)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = writeLine(outputFile, &line)
+		if err != nil {
+			return err
+		}
+
+		rowCounter++
 	}
+
+	return nil
+}
+
+func writeLine(file *os.File, line *[]byte) error {
+	_, err := file.Write(*line)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(newLine)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createCsv(path string) error {
