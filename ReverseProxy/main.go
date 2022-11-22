@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,6 +23,7 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	remoteResp, err := http.DefaultClient.Do(r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
 		return
 	}
 
@@ -29,10 +31,17 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	for k, v := range remoteResp.Header {
 		for _, vv := range v {
-			w.Header().Add(k, vv)
+			w.Header().Set(k, vv)
 		}
 	}
 
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		w.Header().Set("X-Forwarded-For", ip)
+	}
+
+	// TODO: handle text/event-stream content types
+	// TODO: handle http2
 	w.WriteHeader(remoteResp.StatusCode)
 	io.Copy(w, remoteResp.Body)
 }
