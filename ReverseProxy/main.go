@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ReverseProxyHandler struct {
@@ -41,7 +43,22 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		w.Header().Set("X-Forwarded-For", ip)
 	}
 
-	// TODO: handle text/event-stream content types
+	remoteRespContentType := remoteResp.Header.Get("Content-Type")
+
+	writeBodyDone := make(chan bool)
+
+	if remoteRespMediaType, _, _ := mime.ParseMediaType(remoteRespContentType); remoteRespMediaType == "text/event-stream" {
+		go func() {
+			for {
+				select {
+				case <-time.Tick(10 * time.Millisecond):
+					w.(http.Flusher).Flush()
+				case <-writeBodyDone:
+					return
+				}
+			}
+		}()
+	}
 	// TODO: handle http2
 
 	trailerKeys := make([]string, len(remoteResp.Trailer))
@@ -57,6 +74,8 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(remoteResp.StatusCode)
 	io.Copy(w, remoteResp.Body)
+
+	defer close(writeBodyDone)
 
 	for k, v := range remoteResp.Trailer {
 		for _, vv := range v {
