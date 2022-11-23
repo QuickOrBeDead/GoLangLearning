@@ -9,11 +9,31 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type ReverseProxyHandler struct {
 	remoteAddress *url.URL
+}
+
+func (proxy *ReverseProxyHandler) CopyResponse(w http.ResponseWriter, r io.Reader, isEventStream bool) {
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := r.Read(buf)
+		if err != nil && err == io.EOF {
+			break
+		}
+
+		if n == 0 {
+			break
+		}
+
+		w.Write(buf[:n])
+		if isEventStream {
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
+	}
 }
 
 func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,22 +62,6 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		w.Header().Set("X-Forwarded-For", ip)
 	}
 
-	remoteRespContentType := remoteResp.Header.Get("Content-Type")
-
-	writeBodyDone := make(chan bool)
-
-	if remoteRespMediaType, _, _ := mime.ParseMediaType(remoteRespContentType); remoteRespMediaType == "text/event-stream" {
-		go func() {
-			for {
-				select {
-				case <-time.Tick(10 * time.Millisecond):
-					w.(http.Flusher).Flush()
-				case <-writeBodyDone:
-					return
-				}
-			}
-		}()
-	}
 	// TODO: handle http2
 
 	trailerKeys := make([]string, len(remoteResp.Trailer))
@@ -72,9 +76,14 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.WriteHeader(remoteResp.StatusCode)
-	io.Copy(w, remoteResp.Body)
 
-	defer close(writeBodyDone)
+	remoteRespContentType := remoteResp.Header.Get("Content-Type")
+	isEventStream := false
+	if remoteRespMediaType, _, _ := mime.ParseMediaType(remoteRespContentType); remoteRespMediaType == "text/event-stream" {
+		isEventStream = true
+	}
+
+	proxy.CopyResponse(w, remoteResp.Body, isEventStream)
 
 	for k, v := range remoteResp.Trailer {
 		for _, vv := range v {
@@ -88,7 +97,7 @@ func main() {
 	var port int
 
 	flag.IntVar(&port, "port", 8080, "port")
-	flag.StringVar(&targetUrl, "url", "https://www.google.com", "url")
+	flag.StringVar(&targetUrl, "url", "http://localhost:8888", "url")
 	flag.Parse()
 
 	remoteAddress, err := url.Parse(targetUrl)
