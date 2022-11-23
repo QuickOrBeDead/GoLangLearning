@@ -1,14 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"mime"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -85,20 +84,14 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 func main() {
+	var targetUrl string
 	var port int
-	if len(os.Args) < 2 {
-		port = 8080
-	} else {
-		args := os.Args[1:]
 
-		var err error
-		port, err = strconv.Atoi(args[0])
-		if err != nil {
-			panic(err)
-		}
-	}
+	flag.IntVar(&port, "port", 8080, "port")
+	flag.StringVar(&targetUrl, "url", "https://www.google.com", "url")
+	flag.Parse()
 
-	remoteAddress, err := url.Parse("https://www.google.com")
+	remoteAddress, err := url.Parse(targetUrl)
 	if err != nil {
 		panic(err)
 	}
