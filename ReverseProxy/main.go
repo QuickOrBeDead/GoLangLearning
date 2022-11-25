@@ -8,11 +8,33 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
+type Routes struct {
+	Map *map[string]*url.URL
+}
+
+func (r *Routes) GetRemoteAddress(path string) (*url.URL, bool) {
+	v, ok := (*r.Map)[path]
+
+	return v, ok
+}
+
+type RouteConfig struct {
+	Path          string `yaml:"path"`
+	RemoteAddress string `yaml:"remoteAddress"`
+}
+
+type ReverseProxyConfig struct {
+	Routes []RouteConfig `yaml:"routes"`
+}
+
 type ReverseProxyHandler struct {
-	remoteAddress *url.URL
+	routes *Routes
 }
 
 func (proxy *ReverseProxyHandler) CopyResponse(w http.ResponseWriter, r io.Reader, isEventStream bool) {
@@ -37,9 +59,15 @@ func (proxy *ReverseProxyHandler) CopyResponse(w http.ResponseWriter, r io.Reade
 }
 
 func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r.Host = proxy.remoteAddress.Host
-	r.URL.Host = proxy.remoteAddress.Host
-	r.URL.Scheme = proxy.remoteAddress.Scheme
+	remoteAddress, ok := proxy.routes.GetRemoteAddress(r.URL.Path)
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	r.Host = remoteAddress.Host
+	r.URL.Host = remoteAddress.Host
+	r.URL.Scheme = remoteAddress.Scheme
 	r.RequestURI = ""
 
 	remoteResp, err := http.DefaultClient.Do(r)
@@ -93,19 +121,39 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 func main() {
-	var targetUrl string
 	var port int
 
 	flag.IntVar(&port, "port", 8080, "port")
-	flag.StringVar(&targetUrl, "url", "http://localhost:8888", "url")
 	flag.Parse()
 
-	remoteAddress, err := url.Parse(targetUrl)
+	conf := ReverseProxyConfig{}
+	file, err := os.Open("./config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	configBytes, err := io.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), &ReverseProxyHandler{remoteAddress: remoteAddress})
+	err = yaml.Unmarshal(configBytes, &conf)
+	if err != nil {
+		panic(err)
+	}
+
+	routes := make(map[string]*url.URL, len(conf.Routes))
+	for _, v := range conf.Routes {
+		remoteAddress, err := url.Parse(v.RemoteAddress)
+		if err != nil {
+			panic(err)
+		}
+
+		routes[v.Path] = remoteAddress
+	}
+
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), &ReverseProxyHandler{routes: &Routes{Map: &routes}})
 	if err != nil {
 		panic(err)
 	}
