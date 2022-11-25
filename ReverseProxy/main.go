@@ -126,23 +126,18 @@ func main() {
 	flag.IntVar(&port, "port", 8080, "port")
 	flag.Parse()
 
-	conf := ReverseProxyConfig{}
-	file, err := os.Open("./config.yaml")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	configBytes, err := io.ReadAll(file)
+	conf, err := loadConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	err = yaml.Unmarshal(configBytes, &conf)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), &ReverseProxyHandler{routes: loadRoutes(conf)})
 	if err != nil {
 		panic(err)
 	}
+}
 
+func loadRoutes(conf *ReverseProxyConfig) *Routes {
 	routes := make(map[string]*url.URL, len(conf.Routes))
 	for _, v := range conf.Routes {
 		remoteAddress, err := url.Parse(v.RemoteAddress)
@@ -152,9 +147,26 @@ func main() {
 
 		routes[v.Path] = remoteAddress
 	}
+	return &Routes{Map: &routes}
+}
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), &ReverseProxyHandler{routes: &Routes{Map: &routes}})
+func loadConfig() (*ReverseProxyConfig, error) {
+	conf := new(ReverseProxyConfig)
+	file, err := os.Open("./config.yaml")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	defer file.Close()
+
+	configBytes, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(configBytes, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, err
 }
