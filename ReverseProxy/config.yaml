@@ -1,3 +1,4 @@
 routes:
   - path: "/"
     remoteAddress: "http://localhost:8888"
+host: ":8080"

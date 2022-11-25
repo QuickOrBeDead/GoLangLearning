@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"mime"
@@ -31,6 +30,7 @@ type RouteConfig struct {
 
 type ReverseProxyConfig struct {
 	Routes []RouteConfig `yaml:"routes"`
+	Host   string        `yaml:"host"`
 }
 
 type ReverseProxyHandler struct {
@@ -121,17 +121,12 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 func main() {
-	var port int
-
-	flag.IntVar(&port, "port", 8080, "port")
-	flag.Parse()
-
 	conf, err := loadConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), &ReverseProxyHandler{routes: loadRoutes(conf)})
+	err = http.ListenAndServe(conf.Host, &ReverseProxyHandler{routes: loadRoutes(conf)})
 	if err != nil {
 		panic(err)
 	}
