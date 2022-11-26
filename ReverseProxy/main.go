@@ -41,7 +41,7 @@ func (proxy *ReverseProxyHandler) CopyResponse(w http.ResponseWriter, r io.Reade
 	buf := make([]byte, 32*1024)
 	for {
 		n, err := r.Read(buf)
-		if err != nil && err == io.EOF {
+		if err != nil && err != io.EOF {
 			break
 		}
 
@@ -68,6 +68,7 @@ func (proxy *ReverseProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	r.Host = remoteAddress.Host
 	r.URL.Host = remoteAddress.Host
 	r.URL.Scheme = remoteAddress.Scheme
+	r.URL.Path = remoteAddress.Path
 	r.RequestURI = ""
 
 	remoteResp, err := http.DefaultClient.Do(r)
