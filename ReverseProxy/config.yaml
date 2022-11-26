@@ -1,4 +1,6 @@
 routes:
   - path: "/"
     remoteAddress: "http://localhost:8888"
+  - path: "/stream"
+    remoteAddress: "http://localhost:8888/stream"
 host: ":8080"
