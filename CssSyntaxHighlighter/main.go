@@ -90,7 +90,8 @@ func (lex *Lexer) peek(c int) rune {
 }
 
 func (lex *Lexer) nextToken() Token {
-	switch r := lex.peek(0); {
+	var r rune
+	switch r = lex.peek(0); {
 	case r <= 0:
 		return Token{Type: EOF, Val: []rune{}}
 	case unicode.IsSpace(r):
@@ -145,7 +146,7 @@ func (lex *Lexer) nextToken() Token {
 	}
 
 	lex.next()
-	return Token{Type: Unmatched, Val: []rune{lex.peek(0)}}
+	return Token{Type: Unmatched, Val: []rune{r}}
 }
 
 func (lex *Lexer) scanIdent() []rune {
