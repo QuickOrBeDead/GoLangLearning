@@ -27,7 +27,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		for _, v := range getTokens(css) {
-			fmt.Fprintf(w, string(v.Val))
+			fmt.Fprint(w, string(v.Val))
 		}
 	})
 	http.ListenAndServe(":8080", nil)
