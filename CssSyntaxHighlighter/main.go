@@ -25,9 +25,44 @@ func main() {
 		color: #000
 	}`
 
+	colors := make(map[TokenType]string)
+	colors[Ident] = "blue"
+	colors[Function] = "blue"
+	colors[AtKeyword] = "blue"
+	colors[Hash] = "red"
+	colors[String] = "green"
+	colors[BadString] = "green"
+	colors[Url] = "blue"
+	colors[Number] = "gray"
+	colors[Dimension] = "blue"
+	colors[Percentage] = "blue"
+	colors[Whitespace] = "blue"
+	colors[LeftParenthesis] = "blue"
+	colors[RightParenthesis] = "blue"
+	colors[LeftBrace] = "orange"
+	colors[RightBrace] = "orange"
+	colors[Colon] = "yellow"
+	colors[Semicolon] = "yellow"
+	colors[Comma] = "white"
+	colors[Comment] = "blue"
+	colors[At] = "blue"
+	colors[CDO] = "blue"
+	colors[CDC] = "blue"
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		for _, v := range getTokens(css) {
+			color, ok := colors[v.Type]
+			if !ok {
+				color = "white"
+			}
+
+			fmt.Fprint(w, "<!DOCTYPE html><html><head><title>Hello World</title><style>body { background: #000; }</style></head><body>")
+			fmt.Fprint(w, "<span style=\"color:")
+			fmt.Fprint(w, color)
+			fmt.Fprint(w, "\">")
 			fmt.Fprint(w, string(v.Val))
+			fmt.Fprint(w, "</span>")
+			fmt.Fprint(w, "</body></html>")
 		}
 	})
 	http.ListenAndServe(":8080", nil)
