@@ -58,16 +58,20 @@ func main() {
 			var sb strings.Builder
 			css := r.FormValue("cssText")
 			for _, v := range getTokens(css) {
-				color, ok := colors[v.Type]
-				if !ok {
-					color = "white"
-				}
+				if v.Type == Whitespace {
+					sb.WriteString(string(v.Val))
+				} else {
+					color, ok := colors[v.Type]
+					if !ok {
+						color = "white"
+					}
 
-				sb.WriteString("<span style=\"color:")
-				sb.WriteString(color)
-				sb.WriteString("\">")
-				sb.WriteString(convertSpacesAndEntersToHtml(string(v.Val)))
-				sb.WriteString("</span>")
+					sb.WriteString("<span style=\"color:")
+					sb.WriteString(color)
+					sb.WriteString("\">")
+					sb.WriteString(string(v.Val))
+					sb.WriteString("</span>")
+				}
 			}
 
 			data["Result"] = sb.String()
@@ -78,15 +82,6 @@ func main() {
 	})
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./Pages/css"))))
 	http.ListenAndServe(":8080", nil)
-}
-
-func convertSpacesAndEntersToHtml(s string) string {
-	r := strings.ReplaceAll(s, "\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
-	r = strings.ReplaceAll(r, " ", "&nbsp;")
-	r = strings.ReplaceAll(r, "\r\n", "<br>")
-	r = strings.ReplaceAll(r, "\n", "<br>")
-
-	return r
 }
 
 func loadFile(path string) ([]byte, error) {

@@ -9,8 +9,10 @@ main form {
 }
 
 #result {
-    margin: 2rem;
+    margin: 2rem 0 0 0;
     background-color: black;
-    text-align: left;
     padding: 6px;
+    overflow: scroll;
+    width: 300px;
+    text-align: left;
 }

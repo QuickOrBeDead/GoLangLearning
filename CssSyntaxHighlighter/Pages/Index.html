@@ -17,11 +17,7 @@
             <div style="width: 300px;">
                 <input style="display: block; width: 100%;" type="submit" value="Submit">
             </div>
-            {{if ne .Result ""}}
-            <div id="result">
-                {{html .Result}}
-            </div>
-            {{end}}
+            {{if .Result}}<pre id="result">{{html .Result}}</pre>{{end}}
         </form>
     </main>
 </body>
