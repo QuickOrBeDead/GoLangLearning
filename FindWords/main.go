@@ -31,7 +31,7 @@ func main() {
 		words = append(words, sb.String())
 	}
 
-	fmt.Printf("%q", words)
+	fmt.Printf("%q\n", words)
 }
 
 func getWordCount(content string) int {
