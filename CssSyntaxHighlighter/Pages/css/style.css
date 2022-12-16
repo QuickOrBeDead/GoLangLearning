@@ -1,0 +1,16 @@
+main {
+    margin: 0 auto 1.5rem;
+    max-width: 600px;
+    text-align: center;
+}
+
+main form {
+    display: inline-block;
+}
+
+#result {
+    margin: 2rem;
+    background-color: black;
+    text-align: left;
+    padding: 6px;
+}

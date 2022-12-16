@@ -1,30 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"net/http"
+	"os"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
 
 // https://www.w3.org/TR/css-syntax-3/#tokenizing-and-parsing
 func main() {
-	css := `
-	body { background: #ffefd5; }
-	p {
-		color: red;
-		text-align: center !important;
-	}
-	.dark-mode-switch span {
-		width: 18px;
-		height: 18px;
-		border-radius: 9px;
-		margin-top: 2px;
-		box-shadow: -1px 0 2px 1px rgba(0, 0, 0, .1);
-		transition: all 250ms;
-		color: #000
-	}`
-
 	colors := make(map[TokenType]string)
 	colors[Ident] = "blue"
 	colors[Function] = "blue"
@@ -50,22 +36,67 @@ func main() {
 	colors[CDC] = "blue"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		for _, v := range getTokens(css) {
-			color, ok := colors[v.Type]
-			if !ok {
-				color = "white"
+		page, err := loadFile("./Pages/Index.html")
+		if page == nil || err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		t, err := template.New("t").
+			Funcs(template.FuncMap{"html": func(s string) template.HTML { return template.HTML(s) }}).
+			Parse(string(page))
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		data := make(map[string]interface{})
+
+		if r.Method == http.MethodPost {
+			var sb strings.Builder
+			css := r.FormValue("cssText")
+			for _, v := range getTokens(css) {
+				color, ok := colors[v.Type]
+				if !ok {
+					color = "white"
+				}
+
+				sb.WriteString("<span style=\"color:")
+				sb.WriteString(color)
+				sb.WriteString("\">")
+				sb.WriteString(convertSpacesAndEntersToHtml(string(v.Val)))
+				sb.WriteString("</span>")
 			}
 
-			fmt.Fprint(w, "<!DOCTYPE html><html><head><title>Hello World</title><style>body { background: #000; }</style></head><body>")
-			fmt.Fprint(w, "<span style=\"color:")
-			fmt.Fprint(w, color)
-			fmt.Fprint(w, "\">")
-			fmt.Fprint(w, string(v.Val))
-			fmt.Fprint(w, "</span>")
-			fmt.Fprint(w, "</body></html>")
+			data["Result"] = sb.String()
+			data["CssText"] = css
 		}
+
+		t.Execute(w, data)
 	})
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./Pages/css"))))
 	http.ListenAndServe(":8080", nil)
+}
+
+func convertSpacesAndEntersToHtml(s string) string {
+	r := strings.ReplaceAll(s, "\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
+	r = strings.ReplaceAll(r, " ", "&nbsp;")
+	r = strings.ReplaceAll(r, "\r\n", "<br>")
+	r = strings.ReplaceAll(r, "\n", "<br>")
+
+	return r
+}
+
+func loadFile(path string) ([]byte, error) {
+	if _, err := os.Stat(path); err == nil {
+		return os.ReadFile(path)
+	} else if err == os.ErrNotExist {
+		return nil, nil
+	} else {
+		return nil, err
+	}
 }
 
 type Lexer struct {

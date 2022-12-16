@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Syntax Highlighter</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main>
+        <header><h1>CSS Syntax Highlighter</h1></header>
+        <form action="/" method="post">
+            <div style="width: 300px;">
+                <textarea name="cssText" id="cssText" cols="38" rows="10">{{if .CssText}}{{html .CssText}}{{end}}</textarea>
+            </div>
+            <div style="width: 300px;">
+                <input style="display: block; width: 100%;" type="submit" value="Submit">
+            </div>
+            {{if ne .Result ""}}
+            <div id="result">
+                {{html .Result}}
+            </div>
+            {{end}}
+        </form>
+    </main>
+</body>
+</html>
