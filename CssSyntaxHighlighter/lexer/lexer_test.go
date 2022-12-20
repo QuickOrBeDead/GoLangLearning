@@ -1,4 +1,4 @@
-package main
+package lexer
 
 import (
 	"testing"
@@ -14,8 +14,8 @@ func TestNextToken(t *testing.T) {
 	}
 
 	for _, v := range values {
-		l := Lexer{text: []rune(v.css)}
-		for token, i := l.nextToken(), 0; token.Type != EOF; token, i = l.nextToken(), i+1 {
+		l := Lexer{Text: []rune(v.css)}
+		for token, i := l.NextToken(), 0; token.Type != EOF; token, i = l.NextToken(), i+1 {
 			actualTokenType := token.Type
 			expectedTokenType := v.tokenTypes[i]
 			actualTokenValue := string(token.Val)
