@@ -57,7 +57,8 @@ func main() {
 		if r.Method == http.MethodPost {
 			var sb strings.Builder
 			css := r.FormValue("cssText")
-			for _, v := range getTokens(css) {
+			l := Lexer{text: []rune(css)}
+			for v := l.nextToken(); v.Type != EOF; v = l.nextToken() {
 				if v.Type == Whitespace {
 					sb.WriteString(string(v.Val))
 				} else {
@@ -279,17 +280,6 @@ func readRune(text string, pos int) (r rune, size int) {
 	}
 
 	return r, size
-}
-
-func getTokens(text string) []Token {
-	l := Lexer{text: []rune(text)}
-
-	tokens := make([]Token, 0, 100)
-	for t := l.nextToken(); t.Type != EOF; t = l.nextToken() {
-		tokens = append(tokens, t)
-	}
-
-	return tokens
 }
 
 func isIdent(r rune) bool {
