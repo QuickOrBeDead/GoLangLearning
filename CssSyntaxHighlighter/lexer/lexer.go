@@ -45,6 +45,63 @@ type Token struct {
 	Val  []rune
 }
 
+func (t TokenType) String() string {
+	switch t {
+	case Error:
+		return "Error"
+	case Ident:
+		return "Ident"
+	case Function:
+		return "Function"
+	case AtKeyword:
+		return "AtKeyword"
+	case Hash:
+		return "Hash"
+	case String:
+		return "String"
+	case BadString:
+		return "BadString"
+	case Url:
+		return "Url"
+	case Number:
+		return "Number"
+	case Dimension:
+		return "Dimension"
+	case Percentage:
+		return "Percentage"
+	case Whitespace:
+		return "Whitespace"
+	case LeftParenthesis:
+		return "LeftParenthesis"
+	case RightParenthesis:
+		return "RightParenthesis"
+	case LeftBrace:
+		return "LeftBrace"
+	case RightBrace:
+		return "RightBrace"
+	case Colon:
+		return "Colon"
+	case Semicolon:
+		return "Semicolon"
+	case Comma:
+		return "Comma"
+	case Comment:
+		return "Comment"
+	case At:
+		return "At"
+	case CDO:
+		return "CDO"
+	case CDC:
+		return "CDC"
+	case Unmatched:
+		return "Unmatched"
+	case EOF:
+		return "EOF"
+	default:
+		return ""
+	}
+}
+
 func (lex *Lexer) next() {
 	if lex.pos >= len(lex.Text) {
 		return

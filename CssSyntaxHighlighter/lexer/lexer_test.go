@@ -22,11 +22,11 @@ func TestNextToken(t *testing.T) {
 			expectedTokenValue := v.tokenValues[i]
 
 			if actualTokenValue != expectedTokenValue {
-				t.Fatalf("%s %d. token value %v != %v", v.css, i, expectedTokenValue, actualTokenValue)
+				t.Fatalf("%s %d. token value (expected) %v != %v (actual)", v.css, i, expectedTokenValue, actualTokenValue)
 			}
 
 			if actualTokenType != expectedTokenType {
-				t.Fatalf("%s %d. token type %v != %v", v.css, i, expectedTokenType, actualTokenType)
+				t.Fatalf("%s %d. token type (expected) %v != %v (actual)", v.css, i, expectedTokenType.String(), actualTokenType.String())
 			}
 		}
 	}
