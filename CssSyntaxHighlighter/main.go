@@ -12,28 +12,28 @@ import (
 // https://www.w3.org/TR/css-syntax-3/#tokenizing-and-parsing
 func main() {
 	colors := make(map[lexer.TokenType]string)
-	colors[lexer.Ident] = "blue"
-	colors[lexer.Function] = "blue"
-	colors[lexer.AtKeyword] = "blue"
-	colors[lexer.Hash] = "red"
-	colors[lexer.String] = "green"
-	colors[lexer.BadString] = "green"
-	colors[lexer.Url] = "blue"
-	colors[lexer.Number] = "gray"
-	colors[lexer.Dimension] = "blue"
-	colors[lexer.Percentage] = "blue"
-	colors[lexer.Whitespace] = "blue"
-	colors[lexer.LeftParenthesis] = "blue"
-	colors[lexer.RightParenthesis] = "blue"
-	colors[lexer.LeftBrace] = "orange"
-	colors[lexer.RightBrace] = "orange"
-	colors[lexer.Colon] = "yellow"
-	colors[lexer.Semicolon] = "yellow"
-	colors[lexer.Comma] = "white"
-	colors[lexer.Comment] = "blue"
-	colors[lexer.At] = "blue"
-	colors[lexer.CDO] = "blue"
-	colors[lexer.CDC] = "blue"
+	colors[lexer.IdentToken] = "blue"
+	colors[lexer.FunctionToken] = "blue"
+	colors[lexer.AtKeywordToken] = "blue"
+	colors[lexer.HashToken] = "red"
+	colors[lexer.StringToken] = "green"
+	colors[lexer.BadStringToken] = "green"
+	colors[lexer.UrlToken] = "blue"
+	colors[lexer.NumberToken] = "gray"
+	colors[lexer.DimensionToken] = "blue"
+	colors[lexer.PercentageToken] = "blue"
+	colors[lexer.WhitespaceToken] = "blue"
+	colors[lexer.LeftParenthesisToken] = "blue"
+	colors[lexer.RightParenthesisToken] = "blue"
+	colors[lexer.LeftBraceToken] = "orange"
+	colors[lexer.RightBraceToken] = "orange"
+	colors[lexer.ColonToken] = "yellow"
+	colors[lexer.SemicolonToken] = "yellow"
+	colors[lexer.CommaToken] = "white"
+	colors[lexer.CommentToken] = "blue"
+	colors[lexer.AtToken] = "blue"
+	colors[lexer.CDOToken] = "blue"
+	colors[lexer.CDCToken] = "blue"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		page, err := loadFile("./Pages/Index.html")
@@ -59,7 +59,7 @@ func main() {
 			css := r.FormValue("cssText")
 			l := lexer.Lexer{Text: []rune(css)}
 			for v := l.NextToken(); v.Type != lexer.EOF; v = l.NextToken() {
-				if v.Type == lexer.Whitespace {
+				if v.Type == lexer.WhitespaceToken {
 					sb.WriteString(string(v.Val))
 				} else {
 					color, ok := colors[v.Type]

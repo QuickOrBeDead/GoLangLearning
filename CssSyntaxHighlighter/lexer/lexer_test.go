@@ -10,7 +10,7 @@ func TestNextToken(t *testing.T) {
 		tokenTypes  []TokenType
 		tokenValues []string
 	}{
-		{"color: red;", []TokenType{Ident, Colon, Whitespace, Ident, Semicolon}, []string{"color", ":", " ", "red", ";"}},
+		{"color: red;", []TokenType{IdentToken, ColonToken, WhitespaceToken, IdentToken, SemicolonToken}, []string{"color", ":", " ", "red", ";"}},
 	}
 
 	for _, v := range values {

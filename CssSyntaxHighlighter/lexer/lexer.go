@@ -13,30 +13,30 @@ type Lexer struct {
 type TokenType uint32
 
 const (
-	Error TokenType = iota
-	Ident
-	Function
-	AtKeyword
-	Hash
-	String
-	BadString
-	Url
-	Number
-	Dimension
-	Percentage
-	Whitespace
-	LeftParenthesis
-	RightParenthesis
-	LeftBrace
-	RightBrace
-	Colon
-	Semicolon
-	Comma
-	Comment
-	At
-	CDO
-	CDC
-	Unmatched
+	ErrorToken TokenType = iota
+	IdentToken
+	FunctionToken
+	AtKeywordToken
+	HashToken
+	StringToken
+	BadStringToken
+	UrlToken
+	NumberToken
+	DimensionToken
+	PercentageToken
+	WhitespaceToken
+	LeftParenthesisToken
+	RightParenthesisToken
+	LeftBraceToken
+	RightBraceToken
+	ColonToken
+	SemicolonToken
+	CommaToken
+	CommentToken
+	AtToken
+	CDOToken
+	CDCToken
+	UnmatchedToken
 	EOF
 )
 
@@ -47,53 +47,53 @@ type Token struct {
 
 func (t TokenType) String() string {
 	switch t {
-	case Error:
+	case ErrorToken:
 		return "Error"
-	case Ident:
+	case IdentToken:
 		return "Ident"
-	case Function:
+	case FunctionToken:
 		return "Function"
-	case AtKeyword:
+	case AtKeywordToken:
 		return "AtKeyword"
-	case Hash:
+	case HashToken:
 		return "Hash"
-	case String:
+	case StringToken:
 		return "String"
-	case BadString:
+	case BadStringToken:
 		return "BadString"
-	case Url:
+	case UrlToken:
 		return "Url"
-	case Number:
+	case NumberToken:
 		return "Number"
-	case Dimension:
+	case DimensionToken:
 		return "Dimension"
-	case Percentage:
+	case PercentageToken:
 		return "Percentage"
-	case Whitespace:
+	case WhitespaceToken:
 		return "Whitespace"
-	case LeftParenthesis:
+	case LeftParenthesisToken:
 		return "LeftParenthesis"
-	case RightParenthesis:
+	case RightParenthesisToken:
 		return "RightParenthesis"
-	case LeftBrace:
+	case LeftBraceToken:
 		return "LeftBrace"
-	case RightBrace:
+	case RightBraceToken:
 		return "RightBrace"
-	case Colon:
+	case ColonToken:
 		return "Colon"
-	case Semicolon:
+	case SemicolonToken:
 		return "Semicolon"
-	case Comma:
+	case CommaToken:
 		return "Comma"
-	case Comment:
+	case CommentToken:
 		return "Comment"
-	case At:
+	case AtToken:
 		return "At"
-	case CDO:
+	case CDOToken:
 		return "CDO"
-	case CDC:
+	case CDCToken:
 		return "CDC"
-	case Unmatched:
+	case UnmatchedToken:
 		return "Unmatched"
 	case EOF:
 		return "EOF"
@@ -124,58 +124,58 @@ func (lex *Lexer) NextToken() Token {
 	case r <= 0:
 		return Token{Type: EOF, Val: []rune{}}
 	case unicode.IsSpace(r):
-		return Token{Type: Whitespace, Val: lex.scanWhitespace()}
+		return Token{Type: WhitespaceToken, Val: lex.scanWhitespace()}
 	case r == '"', r == '\'':
 		t, v := lex.scanString(r)
 		return Token{Type: t, Val: v}
 	case r == '{':
 		lex.next()
-		return Token{Type: LeftBrace, Val: []rune{r}}
+		return Token{Type: LeftBraceToken, Val: []rune{r}}
 	case r == '}':
 		lex.next()
-		return Token{Type: RightBrace, Val: []rune{r}}
+		return Token{Type: RightBraceToken, Val: []rune{r}}
 	case r == '(':
 		lex.next()
-		return Token{Type: LeftParenthesis, Val: []rune{r}}
+		return Token{Type: LeftParenthesisToken, Val: []rune{r}}
 	case r == ')':
 		lex.next()
-		return Token{Type: RightParenthesis, Val: []rune{r}}
+		return Token{Type: RightParenthesisToken, Val: []rune{r}}
 	case r == ':':
 		lex.next()
-		return Token{Type: Colon, Val: []rune{r}}
+		return Token{Type: ColonToken, Val: []rune{r}}
 	case r == ';':
 		lex.next()
-		return Token{Type: Semicolon, Val: []rune{r}}
+		return Token{Type: SemicolonToken, Val: []rune{r}}
 	case r == ',':
 		lex.next()
-		return Token{Type: Comma, Val: []rune{r}}
+		return Token{Type: CommaToken, Val: []rune{r}}
 	case r == '#':
 		if isIdentStart(lex.peek(1)) {
 			lex.next()
-			return Token{Type: Hash, Val: append([]rune{'#'}, lex.scanIdent()...)}
+			return Token{Type: HashToken, Val: append([]rune{'#'}, lex.scanIdent()...)}
 		}
 	case r == '@':
 		if isIdentStart(lex.peek(1)) {
 			lex.next()
-			return Token{Type: AtKeyword, Val: append([]rune{'@'}, lex.scanIdent()...)}
+			return Token{Type: AtKeywordToken, Val: append([]rune{'@'}, lex.scanIdent()...)}
 		}
 	case isIdentStart(r):
 		val := lex.scanIdent()
 		if lex.peek(1) == '(' {
 			if len(val) == 3 && matchASCIICaseInsensitive(val[0], 'u') && matchASCIICaseInsensitive(val[1], 'r') && matchASCIICaseInsensitive(val[2], 'l') {
-				return Token{Type: Url, Val: val}
+				return Token{Type: UrlToken, Val: val}
 			} else {
-				return Token{Type: Function, Val: val}
+				return Token{Type: FunctionToken, Val: val}
 			}
 		} else {
-			return Token{Type: Ident, Val: val}
+			return Token{Type: IdentToken, Val: val}
 		}
 	case unicode.IsDigit(r):
-		return Token{Type: Number, Val: lex.scanNumber()}
+		return Token{Type: NumberToken, Val: lex.scanNumber()}
 	}
 
 	lex.next()
-	return Token{Type: Unmatched, Val: []rune{r}}
+	return Token{Type: UnmatchedToken, Val: []rune{r}}
 }
 
 func (lex *Lexer) scanIdent() []rune {
@@ -220,7 +220,7 @@ func (lex *Lexer) scanString(endRune rune) (TokenType, []rune) {
 			break
 		} else if isNewline(r) {
 			lex.next()
-			return BadString, lex.Text[startPos:lex.pos]
+			return BadStringToken, lex.Text[startPos:lex.pos]
 		} else if r == '\\' {
 			r1 := lex.peek(0)
 			if r1 <= 0 {
@@ -236,7 +236,7 @@ func (lex *Lexer) scanString(endRune rune) (TokenType, []rune) {
 		}
 	}
 
-	return String, lex.Text[startPos:lex.pos]
+	return StringToken, lex.Text[startPos:lex.pos]
 }
 
 func readRune(text string, pos int) (r rune, size int) {
