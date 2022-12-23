@@ -189,8 +189,17 @@ func (lex *Lexer) scanIdent() []rune {
 
 func (lex *Lexer) scanNumber() []rune {
 	startPos := lex.pos
-	for unicode.IsDigit(lex.peek(0)) {
+	var r rune
+	for r = lex.peek(0); unicode.IsDigit(r); r = lex.peek(0) {
 		lex.next()
+	}
+
+	if r == '.' {
+		lex.next()
+
+		for unicode.IsDigit(lex.peek(0)) {
+			lex.next()
+		}
 	}
 
 	return lex.Text[startPos:lex.pos]
