@@ -13,7 +13,10 @@ func TestNextToken(t *testing.T) {
 		{" ", []TokenType{WhitespaceToken}, []string{" "}},
 		{"5.2", []TokenType{NumberToken}, []string{"5.2"}},
 		{"50.12", []TokenType{NumberToken}, []string{"50.12"}},
+		{".25", []TokenType{NumberToken}, []string{".25"}},
 		{"5.103 1.02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{"5.103", " ", "1.02"}},
+		{"5.103 .02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{"5.103", " ", ".02"}},
+		{".103 .02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{".103", " ", ".02"}},
 		{"color: red;", []TokenType{IdentToken, ColonToken, WhitespaceToken, IdentToken, SemicolonToken}, []string{"color", ":", " ", "red", ";"}},
 	}
 

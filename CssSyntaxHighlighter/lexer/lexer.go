@@ -110,6 +110,10 @@ func (lex *Lexer) next() {
 	lex.pos++
 }
 
+func (lex *Lexer) setPos(p int) {
+	lex.pos = p
+}
+
 func (lex *Lexer) peek(c int) rune {
 	pos := lex.pos + c
 	if pos >= len(lex.Text) {
@@ -159,6 +163,11 @@ func (lex *Lexer) NextToken() Token {
 			lex.next()
 			return Token{Type: AtKeywordToken, Val: append([]rune{'@'}, lex.scanIdent()...)}
 		}
+	case r == '.':
+		val, ok := lex.scanNumber()
+		if ok {
+			return Token{Type: NumberToken, Val: val}
+		}
 	case isIdentStart(r):
 		val := lex.scanIdent()
 		if lex.peek(1) == '(' {
@@ -171,7 +180,10 @@ func (lex *Lexer) NextToken() Token {
 			return Token{Type: IdentToken, Val: val}
 		}
 	case unicode.IsDigit(r):
-		return Token{Type: NumberToken, Val: lex.scanNumber()}
+		val, ok := lex.scanNumber()
+		if ok {
+			return Token{Type: NumberToken, Val: val}
+		}
 	}
 
 	lex.next()
@@ -187,9 +199,14 @@ func (lex *Lexer) scanIdent() []rune {
 	return lex.Text[startPos:lex.pos]
 }
 
-func (lex *Lexer) scanNumber() []rune {
+func (lex *Lexer) scanNumber() ([]rune, bool) {
 	startPos := lex.pos
-	var r rune
+	r := lex.peek(0)
+	isFirstDigit := unicode.IsDigit(r)
+	if isFirstDigit {
+		lex.next()
+	}
+
 	for r = lex.peek(0); unicode.IsDigit(r); r = lex.peek(0) {
 		lex.next()
 	}
@@ -200,9 +217,12 @@ func (lex *Lexer) scanNumber() []rune {
 		for unicode.IsDigit(lex.peek(0)) {
 			lex.next()
 		}
+	} else if !isFirstDigit {
+		lex.setPos(startPos)
+		return nil, false
 	}
 
-	return lex.Text[startPos:lex.pos]
+	return lex.Text[startPos:lex.pos], true
 }
 
 func (lex *Lexer) scanWhitespace() []rune {
