@@ -4,29 +4,44 @@ import (
 	"testing"
 )
 
+type TestDataToken struct {
+	tokenType TokenType
+	val       string
+}
+
+type TestData struct {
+	css    string
+	tokens []TestDataToken
+}
+
 func TestNextToken(t *testing.T) {
-	values := []struct {
-		css         string
-		tokenTypes  []TokenType
-		tokenValues []string
-	}{
-		{" ", []TokenType{WhitespaceToken}, []string{" "}},
-		{"5.2", []TokenType{NumberToken}, []string{"5.2"}},
-		{"50.12", []TokenType{NumberToken}, []string{"50.12"}},
-		{".25", []TokenType{NumberToken}, []string{".25"}},
-		{"5.103 1.02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{"5.103", " ", "1.02"}},
-		{"5.103 .02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{"5.103", " ", ".02"}},
-		{".103 .02", []TokenType{NumberToken, WhitespaceToken, NumberToken}, []string{".103", " ", ".02"}},
-		{"color: red;", []TokenType{IdentToken, ColonToken, WhitespaceToken, IdentToken, SemicolonToken}, []string{"color", ":", " ", "red", ";"}},
+	values := []TestData{
+		{" ", []TestDataToken{{WhitespaceToken, " "}}},
+		{"5.2", []TestDataToken{{NumberToken, "5.2"}}},
+		{"50.12", []TestDataToken{{NumberToken, "50.12"}}},
+		{".25", []TestDataToken{{NumberToken, ".25"}}},
+		{"5.103 1.02", []TestDataToken{{NumberToken, "5.103"}, {WhitespaceToken, " "}, {NumberToken, "1.02"}}},
+		{"5.103 .02", []TestDataToken{{NumberToken, "5.103"}, {WhitespaceToken, " "}, {NumberToken, ".02"}}},
+		{".103 .02", []TestDataToken{{NumberToken, ".103"}, {WhitespaceToken, " "}, {NumberToken, ".02"}}},
+		{"color: red;", []TestDataToken{{IdentToken, "color"}, {ColonToken, ":"}, {WhitespaceToken, " "}, {IdentToken, "red"}, {SemicolonToken, ";"}}},
 	}
 
 	for _, v := range values {
 		l := Lexer{Text: []rune(v.css)}
+		tokens := []Token{}
 		for token, i := l.NextToken(), 0; token.Type != EOF; token, i = l.NextToken(), i+1 {
+			tokens = append(tokens, token)
+		}
+
+		if len(tokens) != len(v.tokens) {
+			t.Fatalf("len(tokens) - %v != %v - len(v.tokens)", len(tokens), len(v.tokens))
+		}
+
+		for i, token := range tokens {
 			actualTokenType := token.Type
-			expectedTokenType := v.tokenTypes[i]
+			expectedTokenType := v.tokens[i].tokenType
 			actualTokenValue := string(token.Val)
-			expectedTokenValue := v.tokenValues[i]
+			expectedTokenValue := v.tokens[i].val
 
 			if actualTokenValue != expectedTokenValue {
 				t.Fatalf("%s %d. token value (expected) %v != %v (actual)", v.css, i, expectedTokenValue, actualTokenValue)
