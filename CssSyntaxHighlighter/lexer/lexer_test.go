@@ -23,6 +23,13 @@ func TestNextToken(t *testing.T) {
 		{"5.103 1.02", []TestDataToken{{NumberToken, "5.103"}, {WhitespaceToken, " "}, {NumberToken, "1.02"}}},
 		{"5.103 .02", []TestDataToken{{NumberToken, "5.103"}, {WhitespaceToken, " "}, {NumberToken, ".02"}}},
 		{".103 .02", []TestDataToken{{NumberToken, ".103"}, {WhitespaceToken, " "}, {NumberToken, ".02"}}},
+		{"100%", []TestDataToken{{PercentageToken, "100%"}}},
+		{".75%", []TestDataToken{{PercentageToken, ".75%"}}},
+		{"100% .25% 1.25%", []TestDataToken{{PercentageToken, "100%"}, {WhitespaceToken, " "}, {PercentageToken, ".25%"}, {WhitespaceToken, " "}, {PercentageToken, "1.25%"}}},
+		{"20px", []TestDataToken{{DimensionToken, "20px"}}},
+		{"2rem", []TestDataToken{{DimensionToken, "2rem"}}},
+		{".2rem", []TestDataToken{{DimensionToken, ".2rem"}}},
+		{"2px .25rem 1.25rem", []TestDataToken{{DimensionToken, "2px"}, {WhitespaceToken, " "}, {DimensionToken, ".25rem"}, {WhitespaceToken, " "}, {DimensionToken, "1.25rem"}}},
 		{"color: red;", []TestDataToken{{IdentToken, "color"}, {ColonToken, ":"}, {WhitespaceToken, " "}, {IdentToken, "red"}, {SemicolonToken, ";"}}},
 	}
 
