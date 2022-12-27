@@ -6,8 +6,9 @@ import (
 )
 
 type Lexer struct {
-	Text []rune
-	pos  int
+	Text  []rune
+	pos   int
+	start int
 }
 
 type TokenType uint32
@@ -122,54 +123,63 @@ func (lex *Lexer) peek(c int) rune {
 	return lex.Text[pos]
 }
 
+func (lex *Lexer) shift() []rune {
+	r := lex.Text[lex.start:lex.pos:lex.pos]
+	lex.start = lex.pos
+	return r
+}
+
 func (lex *Lexer) NextToken() Token {
 	var r rune
 	switch r = lex.peek(0); {
 	case r <= 0:
 		return Token{Type: EOF, Val: []rune{}}
-	case unicode.IsSpace(r):
-		return Token{Type: WhitespaceToken, Val: lex.scanWhitespace()}
+	case lex.scanWhitespace():
+		return Token{Type: WhitespaceToken, Val: lex.shift()}
 	case r == '"', r == '\'':
 		t, v := lex.scanString(r)
 		return Token{Type: t, Val: v}
 	case r == '{':
 		lex.next()
-		return Token{Type: LeftBraceToken, Val: []rune{r}}
+		return Token{Type: LeftBraceToken, Val: lex.shift()}
 	case r == '}':
 		lex.next()
-		return Token{Type: RightBraceToken, Val: []rune{r}}
+		return Token{Type: RightBraceToken, Val: lex.shift()}
 	case r == '(':
 		lex.next()
-		return Token{Type: LeftParenthesisToken, Val: []rune{r}}
+		return Token{Type: LeftParenthesisToken, Val: lex.shift()}
 	case r == ')':
 		lex.next()
-		return Token{Type: RightParenthesisToken, Val: []rune{r}}
+		return Token{Type: RightParenthesisToken, Val: lex.shift()}
 	case r == ':':
 		lex.next()
-		return Token{Type: ColonToken, Val: []rune{r}}
+		return Token{Type: ColonToken, Val: lex.shift()}
 	case r == ';':
 		lex.next()
-		return Token{Type: SemicolonToken, Val: []rune{r}}
+		return Token{Type: SemicolonToken, Val: lex.shift()}
 	case r == ',':
 		lex.next()
-		return Token{Type: CommaToken, Val: []rune{r}}
+		return Token{Type: CommaToken, Val: lex.shift()}
 	case r == '#':
 		if isIdentStart(lex.peek(1)) {
 			lex.next()
-			return Token{Type: HashToken, Val: append([]rune{'#'}, lex.scanIdent()...)}
+			_ = lex.scanIdent()
+			return Token{Type: HashToken, Val: lex.shift()}
 		}
 	case r == '@':
 		if isIdentStart(lex.peek(1)) {
 			lex.next()
-			return Token{Type: AtKeywordToken, Val: append([]rune{'@'}, lex.scanIdent()...)}
+			_ = lex.scanIdent()
+			return Token{Type: AtKeywordToken, Val: lex.shift()}
 		}
 	case r == '.':
-		val, ok := lex.scanNumber()
-		if ok {
-			return Token{Type: NumberToken, Val: val}
+		t := lex.scanNumericToken()
+		if t != ErrorToken {
+			return Token{Type: t, Val: lex.shift()}
 		}
 	case isIdentStart(r):
-		val := lex.scanIdent()
+		_ = lex.scanIdent()
+		val := lex.shift()
 		if lex.peek(1) == '(' {
 			if len(val) == 3 && matchASCIICaseInsensitive(val[0], 'u') && matchASCIICaseInsensitive(val[1], 'r') && matchASCIICaseInsensitive(val[2], 'l') {
 				return Token{Type: UrlToken, Val: val}
@@ -180,26 +190,42 @@ func (lex *Lexer) NextToken() Token {
 			return Token{Type: IdentToken, Val: val}
 		}
 	case unicode.IsDigit(r):
-		val, ok := lex.scanNumber()
-		if ok {
-			return Token{Type: NumberToken, Val: val}
+		t := lex.scanNumericToken()
+		if t != ErrorToken {
+			return Token{Type: t, Val: lex.shift()}
 		}
 	}
 
 	lex.next()
-	return Token{Type: UnmatchedToken, Val: []rune{r}}
+	return Token{Type: UnmatchedToken, Val: lex.shift()}
 }
 
-func (lex *Lexer) scanIdent() []rune {
-	startPos := lex.pos
+func (lex *Lexer) scanIdent() bool {
+	r := false
 	for isIdent(lex.peek(0)) {
 		lex.next()
+		r = true
 	}
 
-	return lex.Text[startPos:lex.pos]
+	return r
 }
 
-func (lex *Lexer) scanNumber() ([]rune, bool) {
+func (lex *Lexer) scanNumericToken() TokenType {
+	if lex.scanNumber() {
+		if lex.peek(0) == '%' {
+			lex.next()
+			return PercentageToken
+		} else if lex.scanIdent() {
+			return DimensionToken
+		}
+
+		return NumberToken
+	}
+
+	return ErrorToken
+}
+
+func (lex *Lexer) scanNumber() bool {
 	startPos := lex.pos
 	r := lex.peek(0)
 	isFirstDigit := unicode.IsDigit(r)
@@ -219,19 +245,20 @@ func (lex *Lexer) scanNumber() ([]rune, bool) {
 		}
 	} else if !isFirstDigit {
 		lex.setPos(startPos)
-		return nil, false
+		return false
 	}
 
-	return lex.Text[startPos:lex.pos], true
+	return true
 }
 
-func (lex *Lexer) scanWhitespace() []rune {
-	startPos := lex.pos
+func (lex *Lexer) scanWhitespace() bool {
+	r := false
 	for unicode.IsSpace(lex.peek(0)) {
 		lex.next()
+		r = true
 	}
 
-	return lex.Text[startPos:lex.pos]
+	return r
 }
 
 func (lex *Lexer) scanEscapedChars() {
